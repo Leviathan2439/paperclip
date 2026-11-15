@@ -58,6 +58,11 @@ import { createInterface, type Interface as ReadlineInterface } from "node:readl
 import { fileURLToPath } from "node:url";
 
 import type {
+  ResolveRunContextRequest,
+  ResolveRunContextResult,
+} from "@paperclipai/shared";
+
+import type {
   AskUserQuestionsInteraction,
   PaperclipPluginManifestV1,
   RequestCheckboxConfirmationInteraction,
@@ -1741,6 +1746,13 @@ export function startWorkerRpcHost(options: WorkerRpcHostOptions): WorkerRpcHost
       case "agentLifecycle":
         if (!plugin.definition.onAgentLifecycle) throw methodNotImplemented("agentLifecycle");
         return plugin.definition.onAgentLifecycle(params as AgentLifecycleRequest);
+      case "resolveRunContext":
+        if (!plugin.definition.onResolveRunContext) {
+          throw methodNotImplemented("resolveRunContext");
+        }
+        return plugin.definition.onResolveRunContext(
+          params as ResolveRunContextRequest
+        );
       case "routeAiConnection":
         if (!plugin.definition.onRouteAiConnection) throw methodNotImplemented("routeAiConnection");
         return plugin.definition.onRouteAiConnection(params as AiConnectionRouterRequest);
@@ -1884,6 +1896,7 @@ export function startWorkerRpcHost(options: WorkerRpcHostOptions): WorkerRpcHost
     if (plugin.definition.onWorkspaceOperation) supportedMethods.push("workspaceOperation");
     if (plugin.definition.onResourceLifecycle) supportedMethods.push("resourceLifecycle");
     if (plugin.definition.onAgentLifecycle) supportedMethods.push("agentLifecycle");
+    if (plugin.definition.onResolveRunContext) supportedMethods.push("resolveRunContext");
     if (plugin.definition.onRouteAiConnection) supportedMethods.push("routeAiConnection");
     if (plugin.definition.onResolveExternalObject) supportedMethods.push("resolveExternalObject");
     if (plugin.definition.onRefreshExternalObjects) supportedMethods.push("refreshExternalObjects");

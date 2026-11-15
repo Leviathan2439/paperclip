@@ -719,6 +719,8 @@ export interface PaperclipPluginManifestV1 {
   capabilities: PluginCapability[];
   /** Required participant in agent preparation, stop, resume, and cleanup. */
   agentLifecycle?: true;
+  /** Plugin contributes context before agent execution. */
+  runContext?: true;
   /** Own project storage and durable workspace operations as one contract. */
   workspaceProvider?: {
     /** Supports bounded run completion separately from removal-safety inspection. */
@@ -779,6 +781,7 @@ export interface PaperclipPluginManifestV1 {
   /** UI bundle declarations. Requires `entrypoints.ui` when populated. */
   ui?: PluginUiDeclaration;
 }
+
 
 // ---------------------------------------------------------------------------
 // Plugin Record – represents a row in the `plugins` table

@@ -812,6 +812,7 @@ export const pluginManifestV1Schema = z.object({
   ).optional(),
   capabilities: z.array(z.enum(PLUGIN_CAPABILITIES)).min(1),
   agentLifecycle: z.literal(true).optional(),
+  runContext: z.literal(true).optional(),
   workspaceProvider: z.object({
     finalizationVersion: z.literal(1).optional(),
     workspaceVerificationVersion: z.literal(1).optional(),
@@ -856,7 +857,9 @@ export const pluginManifestV1Schema = z.object({
   if (manifest.agentLifecycle && !manifest.capabilities.includes("agents.lifecycle.manage")) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Agent lifecycle participation requires agents.lifecycle.manage", path: ["capabilities"] });
   }
-
+  if (manifest.runContext && !manifest.capabilities.includes("agents.context.provide")) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Run context participation requires agents.context.provide", path: ["capabilities"] });
+  }
   if (manifest.workspaceProvider && (!manifest.capabilities.includes("workspaces.manage") || !manifest.resourceLifecycle?.includes("project"))) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["workspaceProvider"], message: "Workspace providers require workspaces.manage and project resource lifecycle" });
   }

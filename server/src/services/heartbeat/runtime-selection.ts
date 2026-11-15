@@ -89,6 +89,10 @@ import { normalizePaperclipWakePayload, selectPaperclipTaskMarkdown } from "@pap
 import type { ProviderResourceDisposition } from "../environment-runtime.js";
 import { stageNativeRuntimeSkillAssets, bindStagedNativeRuntimeSkillAssets } from "../native-runtime/runtime-skill-preservation.js";
 import { configuredSecretGuidance } from "../native-runtime/configured-secret-guidance.js";
+import type {
+  ResolveRunContextRequest,
+  ResolveRunContextResult,
+} from "@paperclipai/shared";
 
 type Run = typeof heartbeatRuns.$inferSelect;
 type Agent = typeof agents.$inferSelect;
@@ -152,6 +156,10 @@ export interface HeartbeatRuntimeSelectionInput {
   trace: { providerTraceRequested: boolean; providerTraceCapture: { metadata: { id: string } } | null };
   issuesSvc: Pick<ReturnType<typeof issueService>, "addComment">;
   runtimeEnv: Record<string, string | undefined>;
+  /** Resolve plugin-contributed context before creating a fresh runtime snapshot. */
+  resolvePluginRunContext?: (
+    request: ResolveRunContextRequest
+  ) => Promise<ResolveRunContextResult>;
   beforeNativeRuntimeSelection?: (runId: string) => Promise<void>;
   onAdapterEvent: (event: AdapterRuntimeEvent) => Promise<void>;
   // Teardown must observe these updates even when a later preparation step throws.
@@ -762,12 +770,29 @@ export async function selectHeartbeatRuntime(db: Db, input: HeartbeatRuntimeSele
         ? await museRunnerBroker(db).snapshot(agent.companyId, agent.id, String(parseObject(agent.adapterConfig).museBindingId ?? "")) : undefined;
       const dotBinding = ["openai_dot_mcp", "grok_bot_mcp"].includes(nativeRuntimeResolution.profile.backend)
         ? await dotRunnerBroker(db).snapshot(agent.companyId, agent.id, String(parseObject(agent.adapterConfig)[nativeRuntimeResolution.profile.backend === "grok_bot_mcp" ? "externalBindingId" : "dotBindingId"] ?? "")) : undefined;
+      const pluginRunContext = await input.resolvePluginRunContext?.({
+        companyId: agent.companyId,
+        agentId: agent.id,
+        runId: run.id,
+        issueId: issueRef.id,
+        projectId: issueContext?.projectId ?? null,
+      });
+      const contextText = pluginRunContext?.contributions
+        .map(c => `## ${c.key} (version: ${c.version})\n\n${c.content}`)
+        .join("\n\n");
+      const runContext = contextText
+        ? {
+            text: contextText,
+            digest: createHash("sha256").update(contextText).digest("hex"),
+          }
+        : undefined;
       const nativeRuntimeContext = await measureRunPhase("runtime_selection.runtime_context", () => buildNativeRuntimeContext({
         db,
         agent,
         runId: run.id,
         runtimeConfig,
         runtimeSkillEntries,
+        runContext,
         instructionWorkingCopy: instructionCopy ? { rootPath: instructionCopy.executionRoot, entryPath: instructionCopy.entryFile, ...(isAgentDirectoryCopy(instructionCopy) ? { kind: "agent_files" as const } : {}) } : undefined,
       }));
       getNativeFreshSessionHandoff = nativeReviewRequest ? undefined : getFreshSessionHandoff;

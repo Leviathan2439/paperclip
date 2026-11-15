@@ -572,7 +572,7 @@ import { resolveAndRetainRunTrustPreset } from "./run-trust-preset.js";
 
 import { effectiveProjectWorkspacePolicy, sourcelessProjectWorkspacePolicy } from "./project-workspace-provider.js";
 import type { PluginWorkerManager } from "./plugin-worker-manager.js";
-
+import { resolvePluginRunContext } from "./plugin-run-context.js";
 import { computeTaskDrain, applyTaskDrain, startTaskDrain, stopTaskDrain, readTaskDrain, subscribeTaskDrainChanges,
   subscribeTaskDrainExpiry } from "./task-admission.js";
 
@@ -3591,6 +3591,7 @@ export function heartbeatService(
           trace: { providerTraceRequested, providerTraceCapture },
           issuesSvc,
           runtimeEnv,
+          resolvePluginRunContext: (request) => resolvePluginRunContext(db, options.pluginWorkerManager, request),
           beforeNativeRuntimeSelection: options.beforeNativeRuntimeSelection,
           onAdapterEvent,
           onNativeLifecycleSelected: (telemetry) => {

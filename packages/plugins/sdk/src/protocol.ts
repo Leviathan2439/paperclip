@@ -21,6 +21,11 @@ import type { AiConnectionRouterRequest, AiConnectionRouterResult } from "@paper
  */
 
 import type {
+  ResolveRunContextRequest,
+  ResolveRunContextResult,
+} from "@paperclipai/shared";
+
+import type {
   PaperclipPluginManifestV1,
   PluginLauncherBounds,
   PluginLauncherRenderContextSnapshot,
@@ -1440,6 +1445,11 @@ export interface HostToWorkerMethods {
   handleApiRequest: [params: PluginApiRequestInput, result: PluginApiResponse];
   /** @see PLUGIN_SPEC.md §13.8 */
   agentLifecycle: [params: AgentLifecycleRequest, result: AgentLifecycleResult];
+  /** Resolve plugin-contributed instructions before agent execution. */
+  resolveRunContext: [
+    params: ResolveRunContextRequest,
+    result: ResolveRunContextResult,
+  ];
   resourceLifecycle: [params: ResourceLifecycleEvent, result: ResourceLifecycleResult];
   getData: [params: GetDataParams, result: unknown];
   /** @see PLUGIN_SPEC.md §13.9 */
@@ -1587,6 +1597,7 @@ export const HOST_TO_WORKER_OPTIONAL_METHODS: readonly HostToWorkerMethodName[] 
   "handleWebhook",
   "handleApiRequest",
   "agentLifecycle",
+  "resolveRunContext",
   "resourceLifecycle",
   "workspacePrepare",
   "workspaceOperation",

@@ -31,6 +31,8 @@ export interface NativeRuntimeContextSnapshot {
   skills: Array<{ key: string; runtimeName: string; versionId: string | null; bundle: NativeRuntimeAssetReference }>;
   mcp: { assignmentSetId: string; digest: string; bindingId: string | null };
   connectionInstructions?: { text: string; digest: string };
+  /** Plugin-contributed instructions pinned to this execution snapshot. */
+  runContext?: { text: string; digest: string };
   aggregateDigest: string;
 }
 
@@ -102,6 +104,7 @@ function aggregatePayload(value: Omit<NativeRuntimeContextSnapshot, "aggregateDi
     // provider-session rotation when policy has not changed.
     mcp: { assignmentSetId: value.mcp.assignmentSetId, digest: value.mcp.digest },
     ...(value.connectionInstructions ? { connectionInstructions: value.connectionInstructions } : {}),
+    ...(value.runContext ? { runContext: value.runContext } : {}),
   };
 }
 
@@ -154,6 +157,21 @@ export function parseNativeRuntimeContext(value: unknown): NativeRuntimeContextS
     if (sha256(content) !== contentDigest) throw new NativeRuntimeContextError("Connection instruction digest does not match text");
     connectionInstructions = { text: content, digest: contentDigest };
   }
+  let runContext: NativeRuntimeContextSnapshot["runContext"];
+
+  if (context.runContext !== undefined) {
+    const block = object(context.runContext, "input.runtimeContext.runContext");
+    exact(block, GENERATED_RUNTIME_CONTEXT_FIELDS.runContext, "input.runtimeContext.runContext");
+
+    const content = text(block.text, "input.runtimeContext.runContext.text");
+    const contentDigest = digest(block.digest, "input.runtimeContext.runContext.digest");
+
+    if (sha256(content) !== contentDigest) {
+      throw new NativeRuntimeContextError("Run context digest does not match text");
+    }
+
+    runContext = { text: content, digest: contentDigest };
+  }
   const parsed = {
     prompt: { revision: promptRevision, text: promptText, digest: promptDigest },
     instructions: {
@@ -172,6 +190,7 @@ export function parseNativeRuntimeContext(value: unknown): NativeRuntimeContextS
       bindingId: mcp.bindingId === null ? null : text(mcp.bindingId, "input.runtimeContext.mcp.bindingId"),
     },
     ...(connectionInstructions ? { connectionInstructions } : {}),
+    ...(runContext ? { runContext } : {}),
   } satisfies Omit<NativeRuntimeContextSnapshot, "aggregateDigest">;
   const aggregateDigest = digest(context.aggregateDigest, "input.runtimeContext.aggregateDigest");
   if (aggregateDigest !== canonicalNativeRuntimeContextDigest(parsed)) {
@@ -188,6 +207,7 @@ export function composeNativeSystemInstructions(context: NativeRuntimeContextSna
   return [
     context.prompt.text,
     entryContent.trim(),
+    context.runContext?.text,
     context.connectionInstructions?.text,
     context.instructions.workingCopy?.kind === "agent_files"
       ? renderInstructionPaths(PAPERCLIP_AGENT_DIRECTORY_PROMPT, context.instructions.workingCopy)

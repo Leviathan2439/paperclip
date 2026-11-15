@@ -16,6 +16,7 @@
         "skills": { "type": "array", "items": { "$ref": "#/$defs/skill" } },
         "mcp": { "$ref": "#/$defs/mcp" },
         "connectionInstructions": { "$ref": "#/$defs/connectionInstructions" },
+        "runContext": { "$ref": "#/$defs/runContext" },
         "aggregateDigest": { "$ref": "#/$defs/sha256Hex" }
       },
       "additionalProperties": false
@@ -72,6 +73,15 @@
       "additionalProperties": false
     },
     "connectionInstructions": {
+      "type": "object",
+      "required": ["text", "digest"],
+      "properties": {
+        "text": { "$ref": "#/$defs/nonEmptyText" },
+        "digest": { "$ref": "#/$defs/sha256Hex" }
+      },
+      "additionalProperties": false
+    },
+    "runContext": {
       "type": "object",
       "required": ["text", "digest"],
       "properties": {

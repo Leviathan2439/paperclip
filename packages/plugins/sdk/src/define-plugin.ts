@@ -53,6 +53,11 @@ import type { AiConnectionRouterRequest, AiConnectionRouterResult } from "@paper
  * ```
  */
 
+import type {
+  ResolveRunContextRequest,
+  ResolveRunContextResult,
+} from "@paperclipai/shared";
+
 import type { PluginContext, ResourceLifecycleEvent, ResourceLifecycleResult } from "./types.js";
 import type {
   PluginEnvironmentAcquireLeaseParams,
@@ -367,6 +372,14 @@ export interface PluginDefinition {
    * Calls can repeat. Fence older versions and make external effects idempotent.
    */
   onAgentLifecycle?(params: AgentLifecycleRequest): Promise<AgentLifecycleResult>;
+
+  /**
+   * Contribute scoped instructions before an agent execution starts.
+   * The host validates and assembles contributions into runtime context.
+   */
+  onResolveRunContext?(
+    params: ResolveRunContextRequest,
+  ): Promise<ResolveRunContextResult>;
 
   /**
    * Reconcile a committed resource event. Requires manifest resourceLifecycle and events.subscribe.

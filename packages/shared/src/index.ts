@@ -2967,3 +2967,8 @@ export {
 export { recognizeLinkPreview, type LinkPreviewTarget, type LinkPreviewState, type LinkPreview, type LinkPreviewResult } from "./link-preview.js";
 export * from "./mcp-apps.js";
 export * from "./mcp-skills.js";
+export type {
+  ResolveRunContextRequest,
+  ResolveRunContextResult,
+  RunContextContribution,
+} from "./types/run-context-plugin.js";
