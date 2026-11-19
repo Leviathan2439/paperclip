@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Building2,
   Cpu,
   Download,
   FlaskConical,
   KeyRound,
   Link2,
   MonitorCog,
+  Network,
   Puzzle,
   Shield,
   SlidersHorizontal,
@@ -122,15 +124,45 @@ export function CompanySettingsSidebar() {
           )}
           {companySettingsPluginSlots
             .filter((slot) => slot.routePath)
-            .map((slot) => (
-              <SidebarNavItem
-                key={`${slot.pluginKey}:${slot.id}`}
-                to={`/company/settings/${slot.routePath}`}
-                label={slot.displayName}
-                icon={Puzzle}
-                end
-              />
-            ))}
+            .map((slot) =>
+              slot.displayName === "Company" ? (
+                <details
+                  key={`${slot.pluginKey}:${slot.id}`}
+                  className="group/company" 
+                  open
+                >
+                  <summary className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50 [&::-webkit-details-marker]:hidden">
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">Company</span>
+                    <span className="text-xs text-muted-foreground">▾</span>
+                  </summary>
+
+                  <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l border-border/70 pl-3">
+                    <SidebarNavItem
+                      to={`/company/settings/${slot.routePath}`}
+                      label="Company Information"
+                      icon={Building2}
+                      end
+                    />
+
+                    <SidebarNavItem
+                      to="/company/settings/departments"
+                      label="Departments"
+                      icon={Network}
+                      end
+                    />
+                  </div>
+                </details>
+              ) : (
+                <SidebarNavItem
+                  key={`${slot.pluginKey}:${slot.id}`}
+                  to={`/company/settings/${slot.routePath}`}
+                  label={slot.displayName}
+                  icon={Puzzle}
+                  end
+                />
+              )
+            )}
           {showPage("company.secrets") && (
             <SidebarNavItem to="/company/settings/secrets" label="Secrets" icon={KeyRound} end />
           )}

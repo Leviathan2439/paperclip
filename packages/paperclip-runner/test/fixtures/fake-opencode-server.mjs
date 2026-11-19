@@ -535,6 +535,55 @@ const server = createServer(async (request, response) => {
       }
       setTimeout(async () => {
         const parsedPrompt = parsedPromptText(promptPayload);
+        if (String(parsedPrompt.message ?? parsedPrompt.task?.prompt ?? "")
+            .includes("filesystem-permissions")) {
+
+          const root = join(process.cwd(), "..");
+          const shared = join(root, "shared");
+          const tasks = join(root, "tasks");
+          const secret = join(root, "secret");
+          const results = {};
+
+          try {
+            results.readShared =
+              await readFile(join(shared, "policy.txt"), "utf8");
+          } catch {
+            results.readShared = null;
+          }
+
+          try {
+            await writeFile(join(shared, "policy.txt"), "MODIFIED");
+            results.writeShared = true;
+          } catch {
+            results.writeShared = false;
+          }
+
+          try {
+            await writeFile(join(tasks, "result.txt"), "CREATED");
+            results.writeTask = true;
+          } catch {
+            results.writeTask = false;
+          }
+
+          try {
+            await readFile(join(secret, "private.txt"), "utf8");
+            results.readSecret = true;
+          } catch {
+            results.readSecret = false;
+          }
+
+          await writeFile(
+            join(process.cwd(), "filesystem-permissions-result.json"),
+            JSON.stringify(results),
+          );
+
+          await callTerminalTool(promptPayload);
+          emit({
+            type: "session.idle",
+            properties: { sessionID: session.id },
+          });
+          return;
+        }
         if (String(parsedPrompt.message ?? parsedPrompt.task?.prompt ?? "").includes("configured-environment-output")) {
           const output = await new Promise((resolve, reject) => {
             execFile("/bin/sh", ["-c", 'printf "%s" "$PROBE_SECRET"'], { timeout: 5000 }, (error, stdout) => {

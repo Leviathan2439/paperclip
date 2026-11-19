@@ -774,6 +774,24 @@ export function pluginRoutes(
     return companyId;
   }
 
+  function assertWorkspacePermissionAdministrator(
+    req: Request,
+    pluginKey: string,
+    actionKey: string,
+    companyId: string | undefined,
+  ): void {
+    if (
+      pluginKey !== "omnicorp.company-management" ||
+      actionKey !== "save-employee-directory-permissions"
+    ) return;
+
+    assertInstanceAdmin(req);
+
+    if (!companyId) {
+      throw badRequest("Company scope required");
+    }
+  }
+
   function requirePluginConfigCompanyId(req: Request, companyId: unknown): string {
     if (typeof companyId !== "string" || companyId.trim().length === 0) {
       throw badRequest('"companyId" is required and must be a non-empty string');
@@ -1483,7 +1501,7 @@ export function pluginRoutes(
     }
 
     const companyId = assertPluginBridgeScope(req, body.companyId);
-
+     
     try {
       const result = await bridgeDeps.workerManager.call(
         plugin.id,
@@ -1576,6 +1594,9 @@ export function pluginRoutes(
     }
 
     const companyId = assertPluginBridgeScope(req, body.companyId);
+    assertWorkspacePermissionAdministrator(
+      req, plugin.pluginKey, body.key, companyId,
+    );
 
     try {
       const result = await bridgeDeps.workerManager.call(
@@ -1670,7 +1691,7 @@ export function pluginRoutes(
     } | undefined;
 
     const companyId = assertPluginBridgeScope(req, body?.companyId);
-
+    
     try {
       const result = await bridgeDeps.workerManager.call(
         plugin.id,
@@ -1760,6 +1781,9 @@ export function pluginRoutes(
     } | undefined;
 
     const companyId = assertPluginBridgeScope(req, body?.companyId);
+    assertWorkspacePermissionAdministrator(
+      req, plugin.pluginKey, key, companyId,
+    );
 
     try {
       const result = await bridgeDeps.workerManager.call(

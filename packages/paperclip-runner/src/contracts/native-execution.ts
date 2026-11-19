@@ -194,6 +194,10 @@ export interface NativeExecutionInputV1 {
     repoUrl: string | null;
     repoRef: string | null;
     branchName: string | null;
+    authorizedDirectories?: Array<{
+      path: string;
+      access: "read" | "write";
+    }>;
   };
   session: {
     normalizedSessionId: string | null;
@@ -484,7 +488,9 @@ export function parseNativeExecutionInput(value: unknown): NativeExecutionInput 
   const task = record(input.task, "input.task");
   exactKeys(task, ["identifier", "title", "description", "prompt", "workMode"], "input.task");
   const workspace = record(input.workspace, "input.workspace");
-  exactKeys(workspace, ["cwd", "repoUrl", "repoRef", "branchName"], "input.workspace");
+  exactKeys(workspace, [
+    "cwd", "repoUrl", "repoRef", "branchName", "authorizedDirectories",
+  ], "input.workspace");
   const session = record(input.session, "input.session");
   exactKeys(session, ["normalizedSessionId", "driverKind", "protocolVersion", "lifecyclePolicy"], "input.session");
   const completionContract = record(input.completionContract, "input.completionContract");
@@ -894,6 +900,31 @@ export function parseNativeExecutionInput(value: unknown): NativeExecutionInput 
       repoUrl: nullableText(workspace.repoUrl, "input.workspace.repoUrl"),
       repoRef: nullableText(workspace.repoRef, "input.workspace.repoRef"),
       branchName: nullableText(workspace.branchName, "input.workspace.branchName"),
+      ...(workspace.authorizedDirectories === undefined ? {} : {
+        authorizedDirectories: (() => {
+          if (
+            !Array.isArray(workspace.authorizedDirectories) ||
+            workspace.authorizedDirectories.length > 64
+          ) {
+            throw new NativeExecutionInputError("Invalid authorized directories");
+          }
+          return workspace.authorizedDirectories.map((entry, index) => {
+            const directory = record(entry, `input.workspace.authorizedDirectories[${index}]`);
+            exactKeys(directory, ["path", "access"], `input.workspace.authorizedDirectories[${index}]`);
+            const directoryPath = text(directory.path, `authorizedDirectories[${index}].path`);
+            if (!directoryPath.startsWith("/") || directoryPath.length > 4096) {
+              throw new NativeExecutionInputError("Authorized directory must be an absolute path");
+            }
+            if (directory.access !== "read" && directory.access !== "write") {
+              throw new NativeExecutionInputError("Invalid authorized directory access");
+            }
+            return {
+              path: directoryPath,
+              access: directory.access as "read" | "write",
+            };
+          });
+        })(),
+      }),
     },
     session: {
       normalizedSessionId: nullableText(session.normalizedSessionId, "input.session.normalizedSessionId"),

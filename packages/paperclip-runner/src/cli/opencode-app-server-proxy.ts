@@ -117,6 +117,28 @@ async function open(
   const finishDiagnostics = createOpenCodeFinishDiagnosticForwarder(send);
   driver = new OpenCodeServerDriver({
     model,
+    authorizedDirectories: (() => {
+      const parsed: unknown = JSON.parse(
+        process.env.PAPERCLIP_OPENCODE_AUTHORIZED_DIRECTORIES ?? "[]",
+      );
+      if (!Array.isArray(parsed) || parsed.length > 64) {
+        throw new Error("Invalid authorized directories");
+      }
+      return parsed.map((entry): { path: string; access: "read" | "write" } => {
+        if (
+          !entry ||
+          typeof entry !== "object" ||
+          Array.isArray(entry) ||
+          typeof entry.path !== "string" ||
+          !entry.path.startsWith("/") ||
+          entry.path.length > 4096 ||
+          (entry.access !== "read" && entry.access !== "write")
+        ) {
+          throw new Error("Invalid authorized directory entry");
+        }
+        return { path: entry.path, access: entry.access };
+      });
+    })(),
     permissionMode: parseOpenCodeProxyPermissionMode(
       process.env.PAPERCLIP_OPENCODE_PERMISSION_MODE,
     ),

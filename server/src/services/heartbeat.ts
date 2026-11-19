@@ -68,6 +68,10 @@ import { nativeRunHasNoWorkspaceAccess } from "./workspace-restore-recovery-stat
 import { prepareAndSelectHeartbeatRuntime } from "./heartbeat/runtime-selection.js";
 import { createHeartbeatRunCompletion } from "./heartbeat/run-completion.js";
 import { crashPoint } from "@paperclipai/shared/crash-points";
+import { authorizeWorkspaceAccess } from "./company-workspace/authorize-workspace-access.js";
+import { resolvePluginWorkspaceAccess } from "./plugin-workspace-access.js";
+import { resolvePaperclipInstanceRoot } from "../home-paths.js";
+import * as companyWorkspacePath from "node:path";
 export {
   MAX_TURN_CONTINUATION_WAKE_REASON,
   parseSandboxProviderPluginNotReadyFailureMessage,
@@ -2994,7 +2998,26 @@ export function heartbeatService(
         workspaceRealization,
         executionTarget,
         workspaceRestoreSource,
-      } = preparedWorkspace;
+      } = preparedWorkspace;      
+      // Resolve plugin-managed workspace access for this agent run.
+      const workspaceRequests = await resolvePluginWorkspaceAccess(
+        db,
+        options.pluginWorkerManager,
+        {
+          companyId: agent.companyId,
+          agentId: agent.id,
+          runId: run.id,
+        },
+      );
+      const authorizedWorkspaceDirectories = await authorizeWorkspaceAccess(
+        db,
+        agent.companyId,
+        workspaceRequests,
+      );
+      context.companyWorkspace = {
+        directories: authorizedWorkspaceDirectories,
+        permissionsEnforced: false, 
+      };
       const preparedInstructions = instructionWorkingCopy = createHeartbeatInstructionWorkingCopy({
         observabilityCompatibilityKey: observability?.compatibilityKey,
         db, instructionCopies, readRun: () => run!, agent, context,
@@ -3577,6 +3600,7 @@ export function heartbeatService(
           config: {
             runtimeConfig,
             runtimeSkillEntries,
+            authorizedWorkspaceDirectories,
             runScopedMentionedSkillKeys,
             configuredSecretNames: configuredSecretEnvironment(
               configuredEnvironmentProjection(configuredTaskEnvironment, secretKeys),

@@ -3333,6 +3333,13 @@
       "when": 1794554569782,
       "tag": "0477_friendly_toro",
       "breakpoints": true
+    },
+    {
+      "idx": 478,
+      "version": "7",
+      "when": 1794760662300,
+      "tag": "0478_square_cerebro",
+      "breakpoints": true
     }
   ]
 }

@@ -93,6 +93,8 @@ import type {
   ResolveRunContextRequest,
   ResolveRunContextResult,
 } from "@paperclipai/shared";
+import type { AuthorizedWorkspaceDirectory } from "../company-workspace/authorize-workspace-access.js";
+import { formatWorkspaceContext } from "../company-workspace/format-workspace-context.js";
 
 type Run = typeof heartbeatRuns.$inferSelect;
 type Agent = typeof agents.$inferSelect;
@@ -143,6 +145,7 @@ export interface HeartbeatRuntimeSelectionInput {
     nativeLifecyclePolicy?: NativeLifecyclePolicy | null;
     runtimeConfig: Record<string, unknown>;
     runtimeSkillEntries: Parameters<typeof buildNativeRuntimeContext>[0]["runtimeSkillEntries"];
+    authorizedWorkspaceDirectories?: AuthorizedWorkspaceDirectory[];
     runScopedMentionedSkillKeys: string[];
     /** Configured entries resolved from secrets, by name only. */
     configuredSecretNames?: readonly string[];
@@ -777,8 +780,14 @@ export async function selectHeartbeatRuntime(db: Db, input: HeartbeatRuntimeSele
         issueId: issueRef.id,
         projectId: issueContext?.projectId ?? null,
       });
-      const contextText = pluginRunContext?.contributions
+      const companyContext = pluginRunContext?.contributions
         .map(c => `## ${c.key} (version: ${c.version})\n\n${c.content}`)
+        .join("\n\n") ?? "";
+      const workspaceContext = formatWorkspaceContext(
+        input.config.authorizedWorkspaceDirectories ?? [],
+      );
+      const contextText = [companyContext, workspaceContext]
+        .filter(Boolean)
         .join("\n\n");
       const runContext = contextText
         ? {
@@ -896,6 +905,9 @@ export async function selectHeartbeatRuntime(db: Db, input: HeartbeatRuntimeSele
                 repoUrl: executionWorkspace.repoUrl,
                 repoRef: executionWorkspace.repoRef,
                 branchName: executionWorkspace.branchName,
+                authorizedDirectories: input.config.authorizedWorkspaceDirectories?.map(
+                  ({ path, access }) => ({ path, access })
+                ),
               },
               normalizedSessionId,
               executionMode,

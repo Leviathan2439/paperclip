@@ -589,11 +589,27 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
         ? ""
         : renderTemplate(promptTemplate, templateData);
       const sessionHandoffNote = asString(context.paperclipSessionHandoffMarkdown, "").trim();
+      const companyWorkspace = parseObject(context.companyWorkspace);
+      const companyDirectories = parseObject(companyWorkspace.directories);
+      const companyWorkspaceNote = 
+        Object.entries(companyDirectories).length > 0
+          ? [
+            "## Company Shared Drive",
+            "These directories are available for this run:",
+            ...Object.entries(companyDirectories).map(([name, value]) => {
+              const directory = parseObject(value);
+              return `- ${name}: ${asString(directory.path, "")} (requested access: ${asString(directory.access, "read")})`;
+            }),
+            "Use these absolute paths when accessing company files.",
+            "Do not modify read-only directories. Filesystem permissions are not yet enforced.",
+          ].join("\n")
+        : "";
       const basePrompt = joinPromptSections([
         instructionsPrefix,
         renderedBootstrapPrompt,
         wakePrompt,
         taskContextNote,
+        companyWorkspaceNote,
         sessionHandoffNote,
         renderedPrompt,
       ]);

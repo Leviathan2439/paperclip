@@ -721,6 +721,7 @@ export interface PaperclipPluginManifestV1 {
   agentLifecycle?: true;
   /** Plugin contributes context before agent execution. */
   runContext?: true;
+  workspaceAccess?: true;
   /** Own project storage and durable workspace operations as one contract. */
   workspaceProvider?: {
     /** Supports bounded run completion separately from removal-safety inspection. */

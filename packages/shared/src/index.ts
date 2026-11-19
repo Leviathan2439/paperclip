@@ -2972,3 +2972,8 @@ export type {
   ResolveRunContextResult,
   RunContextContribution,
 } from "./types/run-context-plugin.js";
+export type {
+  ResolveWorkspaceAccessRequest,
+  ResolveWorkspaceAccessResult,
+  WorkspaceAccessDirectory,
+} from "./types/workspace-access-plugin.js";

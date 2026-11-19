@@ -271,6 +271,7 @@ function ClassicSidebar({ children }: { children?: ReactNode }) {
             label="Org"
             collapsible={{ open: organizationOpen, onOpenChange: setOrganizationOpen }}
           >
+            <SidebarNavItem to="/departments" label="Departments" icon={Network} />
             <SidebarNavItem to="/agents" label="Agents" icon={Users} />
             <SidebarNavItem to="/skills" label="Skills" icon={Boxes} />
             <SidebarNavItem to="/apps" label="Connectors" icon={Unplug} />
@@ -291,6 +292,7 @@ function ClassicSidebar({ children }: { children?: ReactNode }) {
               collapsible={{ open: organizationOpen, onOpenChange: setOrganizationOpen }}
             >
               <SidebarNavItem to="/org" label="Org" icon={Network} />
+              <SidebarNavItem to="/departments" label="Departments" icon={Network} />
               <SidebarNavItem to="/apps" label="Connectors" icon={Unplug} />
               <SidebarNavItem to="/timeline" label="Timeline" icon={GanttChartSquare} />
               <SidebarNavItem to="/costs" label="Costs" icon={DollarSign} />

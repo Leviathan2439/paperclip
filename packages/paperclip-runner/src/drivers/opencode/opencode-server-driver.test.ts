@@ -156,6 +156,80 @@ afterAll(async () => {
 });
 
 describe("OpenCodeServerDriver", () => {
+  it.runIf(process.platform === "linux")(
+    "starts inside Bubblewrap with authorized company directories",
+    async () => {
+      const root = await mkdtemp(join(tmpdir(), "paperclip-opencode-sandbox-"));
+      roots.push(root);
+
+      const workspace = join(root, "workspace");
+      const shared = join(root, "shared");
+
+      await mkdir(workspace);
+      await mkdir(shared);
+      const tasks = join(root, "tasks");
+      const secret = join(root, "secret");
+
+      await mkdir(tasks);
+      await mkdir(secret);
+      await writeFile(join(secret, "private.txt"), "SECRET");
+      await writeFile(join(shared, "policy.txt"), "Company policy");
+      
+      const { openSync, closeSync } = await import("node:fs");
+      const executableFd = openSync(fixture, "r");
+
+      const driver = new OpenCodeServerDriver({
+        model: "openrouter/test-model",
+        command: fixture,
+        commandFd: executableFd,
+        runtimeDirectory: join(root, "runtime"),
+        environment: { PATH: process.env.PATH },
+        authorizedDirectories: [
+          { path: shared, access: "read" },
+          { path: tasks, access: "write" },
+        ],
+      });
+
+      try {
+        const session = await driver.openSession({
+          runId: "sandbox-startup",
+          normalizedSessionId: "sandbox-startup",
+          workingDirectory: workspace,
+        });
+      
+        try {
+          await session.startTurn({
+            message: { role: "user", text: "filesystem-permissions" },
+          });
+
+          const events = await collectTurnEvents(session.events());
+          expect(events.at(-1)?.eventType).toBe("turn.completed");
+
+          const results = JSON.parse(
+            await readFile(
+              join(workspace, "filesystem-permissions-result.json"),
+              "utf8",
+            ),
+          );
+
+          expect(results).toEqual({
+            readShared: "Company policy",
+            writeShared: false,
+            writeTask: true,
+            readSecret: false,
+          });
+
+          expect(await readFile(join(tasks, "result.txt"), "utf8"))
+            .toBe("CREATED");
+        } finally {
+          await session.close({ reason: "test" });
+        }
+      } finally {
+        closeSync(executableFd);
+      }
+    },
+  );
+
   it("bounds schema rejection errors in events and transcript without changing the MCP receipt", async () => {
     await chmod(fixture, 0o755);
     const root = await mkdtemp(join(tmpdir(), "paperclip-large-rejection-")); roots.push(root);

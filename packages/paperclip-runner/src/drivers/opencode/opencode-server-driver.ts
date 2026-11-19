@@ -101,6 +101,7 @@ import {
   materializeNativeRuntimeSkills,
   releaseMaterializedNativeRuntimeSkills,
 } from "../runtime-context-materializer.js";
+import { buildLocalProcessSandboxSpawnTarget } from "@paperclipai/filesystem-sandbox";
 
 export const OPENCODE_SERVER_DRIVER_KIND = "opencode_server" as const;
 export const QUALIFIED_OPENCODE_VERSION = "1.18.34" as const;
@@ -209,6 +210,10 @@ export interface OpenCodeServerDriverOptions {
     afterExit?(): void;
   };
   runtimeDirectory: string;
+  authorizedDirectories?: Array<{
+    path: string;
+    access: "read" | "write";
+  }>;
   systemInstructions?: string;
   runtimeContext?: NativeRuntimeContextSnapshot | null;
   environment?: NodeJS.ProcessEnv;
@@ -2721,6 +2726,13 @@ async function startRuntime(input: {
     externalDirectories[`${root}/**`] = "allow";
   }
   if (instructionRoot) externalDirectories[`${instructionRoot}/**`] = "allow";
+  // Allow OpenCode tools to access company directories explicitly
+  // authorized for this agent. Bubblewrap independently enforces
+  // read-only versus writable filesystem access.
+  for (const directory of input.options.authorizedDirectories ?? []) {
+    externalDirectories[directory.path] = "allow";
+    externalDirectories[`${directory.path}/**`] = "allow";
+  }
   const [modelProvider, ...modelIdParts] = input.options.model.split("/");
   const providerModelId = modelIdParts.join("/");
   const providerRoute = modelProvider === "openrouter"
@@ -2759,6 +2771,9 @@ async function startRuntime(input: {
       input.options.onDiagnostic?.(redact(`OpenCode executable cleanup failed: ${String(error)}`, sensitiveValues));
     }
   };
+    let sandboxTarget: Awaited<
+      ReturnType<typeof buildLocalProcessSandboxSpawnTarget>
+    > | null = null;
   try {
     const config = {
       $schema: "https://opencode.ai/config.json",
@@ -2861,6 +2876,30 @@ async function startRuntime(input: {
         ...(providerProxy ? { NO_PROXY: [providerEnvironment.no_proxy ?? providerEnvironment.NO_PROXY, "127.0.0.1", "localhost"].filter(Boolean).join(",") } : {}),
       },
     );
+    sandboxTarget = input.options.authorizedDirectories?.length
+      ? await buildLocalProcessSandboxSpawnTarget({
+          executable: input.options.command ?? resolvePinnedOpenCodeCommand(),
+          args: ["serve", "--hostname", "127.0.0.1", "--port", String(port)],
+          cwd: input.cwd,
+          options: {
+            workspaceDir: input.cwd,
+            filesystemScope: "workspace",
+            verifiedExecutableFd: input.options.commandFd,
+            managedPaths: [
+              { path: input.root, access: "rw" },
+              ...(instructionRoot
+                ? [{ path: instructionRoot, access: "ro" as const }]
+                : []),
+            ],
+            authorizedPaths: input.options.authorizedDirectories.map(
+              ({ path, access }) => ({
+                path,
+                access: access === "write" ? "rw" as const : "ro" as const,
+              }),
+            ),
+          },
+        })
+      : null;
     const isolateProcessGroup = input.options.isolateProcessGroup ?? true;
     const stdio: Array<"ignore" | "pipe" | number> = ["ignore", "ignore", "pipe"];
     if (input.options.commandFd !== undefined) {
@@ -2870,16 +2909,24 @@ async function startRuntime(input: {
     input.options.commandLifecycle?.beforeSpawn();
     launchPrepared = true;
     child = spawn(
-      input.options.command ?? resolvePinnedOpenCodeCommand(),
-      ["serve", "--hostname", "127.0.0.1", "--port", String(port)],
+      sandboxTarget?.command ??
+        (input.options.command ?? resolvePinnedOpenCodeCommand()),
+      sandboxTarget?.args ??
+        ["serve", "--hostname", "127.0.0.1", "--port", String(port)],
       {
-        cwd: input.cwd,
-        env: environment,
+        cwd: sandboxTarget?.cwd ?? input.cwd,
+        env: {
+          ...environment,
+          ...sandboxTarget?.env,
+        },
         stdio,
         detached: globalThis.process.platform !== "win32" && isolateProcessGroup,
       },
     );
-    child.once("exit", releaseExecutable);
+    child.once("exit", () => {
+      releaseExecutable();
+      void sandboxTarget?.cleanup?.();
+    });
     if (child.pid !== undefined) {
       try {
         input.options.commandLifecycle?.afterSpawn();
@@ -3000,6 +3047,7 @@ async function startRuntime(input: {
       force: true,
     }).catch(() => undefined);
     await removeIsolatedHome(isolatedHome).catch(() => undefined);
+    await sandboxTarget?.cleanup?.().catch(() => undefined);
     throw error;
   }
 }

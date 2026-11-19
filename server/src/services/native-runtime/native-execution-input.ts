@@ -94,6 +94,10 @@ export interface BuildNativeExecutionInput {
     repoUrl: string | null;
     repoRef: string | null;
     branchName: string | null;
+    authorizedDirectories?: Array<{
+      path: string;
+      access: "read" | "write";
+    }>;
   };
   normalizedSessionId: string | null;
   provider?: "cursor_cloud" | "codex" | "opencode" | "claude_managed" | "aws_agentcore" | "acpx" | "openai_dot" | "grok_bot" | "muse";
@@ -307,6 +311,9 @@ export function buildNativeExecutionInput(input: BuildNativeExecutionInput): Nat
       repoUrl: input.workspace.repoUrl,
       repoRef: input.workspace.repoRef,
       branchName: input.workspace.branchName,
+      ...(input.workspace.authorizedDirectories?.length ? {
+        authorizedDirectories: input.workspace.authorizedDirectories,
+      } : {}),
     },
     session: {
       normalizedSessionId: input.normalizedSessionId,

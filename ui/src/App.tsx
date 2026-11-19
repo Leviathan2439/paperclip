@@ -98,6 +98,7 @@ const Costs = lazy(() => import("./pages/Costs").then((module) => ({ default: mo
 const WhatNeedsMe = lazy(() => import("./pages/WhatNeedsMe").then((module) => ({ default: module.WhatNeedsMe })));
 const DecisionQueuePage = lazy(() => import("./pages/DecisionQueuePage").then((module) => ({ default: module.DecisionQueuePage })));
 const BoardChat = lazy(() => import("./pages/BoardChat").then((module) => ({ default: module.BoardChat })));
+const Departments = lazy(() => import("./pages/Departments").then((module) => ({ default: module.Departments })));
 const CompanySettings = lazy(() => import("./pages/CompanySettings").then((module) => ({ default: module.CompanySettings })));
 const CompanyConnections = lazy(() => import("./pages/CompanyConnections").then((module) => ({ default: module.CompanyConnections })));
 const CompanyEnvironments = lazy(() => import("./pages/CompanyEnvironments").then((module) => ({ default: module.CompanyEnvironments })));
@@ -264,6 +265,7 @@ function boardRoutes(streamlinedUiEnabled: boolean, combinedInboxTasksEnabled: b
       <Route element={<HiddenSettingsPageGate pageKey="instance.adapters" />}>
         <Route path="company/settings/instance/adapters" element={<AdapterManager />} />
       </Route>
+      <Route path="company/settings/departments" element={<Departments />} />
       <Route path="company/settings/:settingsRoutePath/*" element={<CompanySettingsPluginPage />} />
       <Route path="skills/sources" element={<SkillSources />} />
       <Route path="skills/sources/:sourceId" element={<SkillSources />} />
@@ -294,6 +296,7 @@ function boardRoutes(streamlinedUiEnabled: boolean, combinedInboxTasksEnabled: b
       <Route path="agents/:agentId" element={<AgentDetail />} />
       <Route path="agents/:agentId/:tab" element={<AgentDetail />} />
       <Route path="agents/:agentId/runs/:runId" element={<AgentDetail />} />
+      <Route path="company/asettings/departments" element={<Departments />} />
       <Route path="projects" element={<Projects />} />
       <Route path="projects/:projectId" element={<ProjectDetail />} />
       <Route path="projects/:projectId/overview" element={<ProjectDetail />} />

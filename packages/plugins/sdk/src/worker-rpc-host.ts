@@ -1,5 +1,6 @@
 import { freshWorkspaceSchema } from "./workspace-provider.js";
 import { workspaceProviderBindingSchema } from "@paperclipai/shared";
+import type { ResolveWorkspaceAccessRequest} from "@paperclipai/shared";
 import { pluginWorkspaceParamsSchema, pluginWorkspacePrepareParamsSchema, parseWorkspacePrepareResult, parseWorkspaceProviderResult } from "./workspace-provider.js";
 import { environmentTaskOperationSchema, parseEnvironmentTaskResult, type PluginEnvironmentTaskParams } from "./environment-tasks.js";
 import type { AgentLifecycleRequest, AgentLifecycleResult } from "@paperclipai/shared";
@@ -1753,6 +1754,13 @@ export function startWorkerRpcHost(options: WorkerRpcHostOptions): WorkerRpcHost
         return plugin.definition.onResolveRunContext(
           params as ResolveRunContextRequest
         );
+      case "resolveWorkspaceAccess":
+        if (!plugin.definition.onResolveWorkspaceAccess) {
+          throw methodNotImplemented("resolveWorkspaceAccess");
+        }
+        return plugin.definition.onResolveWorkspaceAccess(
+          params as ResolveWorkspaceAccessRequest
+        );
       case "routeAiConnection":
         if (!plugin.definition.onRouteAiConnection) throw methodNotImplemented("routeAiConnection");
         return plugin.definition.onRouteAiConnection(params as AiConnectionRouterRequest);
@@ -1897,6 +1905,7 @@ export function startWorkerRpcHost(options: WorkerRpcHostOptions): WorkerRpcHost
     if (plugin.definition.onResourceLifecycle) supportedMethods.push("resourceLifecycle");
     if (plugin.definition.onAgentLifecycle) supportedMethods.push("agentLifecycle");
     if (plugin.definition.onResolveRunContext) supportedMethods.push("resolveRunContext");
+    if (plugin.definition.onResolveWorkspaceAccess) supportedMethods.push("resolveWorkspaceAccess");    
     if (plugin.definition.onRouteAiConnection) supportedMethods.push("routeAiConnection");
     if (plugin.definition.onResolveExternalObject) supportedMethods.push("resolveExternalObject");
     if (plugin.definition.onRefreshExternalObjects) supportedMethods.push("refreshExternalObjects");

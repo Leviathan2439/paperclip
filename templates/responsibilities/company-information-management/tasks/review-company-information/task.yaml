@@ -1,0 +1,43 @@
+
+id: review-company-information
+version: "1.0"
+name: Review & Improve Company Information
+
+description: >
+  Evaluate company information, interview the user,
+  and recommend improvements for approval.
+
+procedure: ./procedure.md
+
+inputs:
+  - company_information
+  - company_projects
+
+outputs:
+  - company_information_review
+  - section_change_proposals
+
+permissions:
+  company_information: read
+  company_projects: read
+  company_information_write: false
+
+approvals:
+  required: true
+  approver: company_owner
+  scope: per_section
+  auto_apply: false
+
+execution:
+  mode: employee
+  contractor_delegation: false
+
+context:
+  company_information: true
+  company_projects: true
+  employee_long_term_memory: false
+
+memory:
+  retention: task_only
+  report_path: "${TASK_FOLDER}/company-information-review.md"
+  update_employee_memory: false

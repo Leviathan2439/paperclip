@@ -2,6 +2,10 @@ import type { PluginWorkspaceParams, PluginWorkspacePrepareParams, PluginWorkspa
 import type { PluginEnvironmentTaskParams, PluginEnvironmentTaskResult } from "./environment-tasks.js";
 import type { AgentLifecycleRequest, AgentLifecycleResult } from "@paperclipai/shared";
 import type { AiConnectionRouterRequest, AiConnectionRouterResult } from "@paperclipai/shared";
+import type {
+  ResolveWorkspaceAccessRequest,
+  ResolveWorkspaceAccessResult,
+} from "@paperclipai/shared";
 /**
  * `definePlugin` — the top-level helper for authoring a Paperclip plugin.
  *
@@ -380,6 +384,15 @@ export interface PluginDefinition {
   onResolveRunContext?(
     params: ResolveRunContextRequest,
   ): Promise<ResolveRunContextResult>;
+  /**
+   * Request additional filesystem access for an agent execution.
+   *
+   * Paperclip core validates and authorizes every requested directory.
+   * This hook does not grant access by itself.
+   */
+  onResolveWorkspaceAccess?(
+    params: ResolveWorkspaceAccessRequest,
+  ): Promise<ResolveWorkspaceAccessResult>;
 
   /**
    * Reconcile a committed resource event. Requires manifest resourceLifecycle and events.subscribe.

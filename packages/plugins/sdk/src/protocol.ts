@@ -3,6 +3,7 @@ import type { PluginEnvironmentTaskParams, PluginEnvironmentTaskResult } from ".
 import type { PluginAgentRuntimeState, PluginAgentRuntimeIdentity } from "./types.js";
 import type { AgentLifecycleRequest, AgentLifecycleResult } from "@paperclipai/shared";
 import type { AiConnectionRouterRequest, AiConnectionRouterResult } from "@paperclipai/shared";
+import type { ResolveWorkspaceAccessRequest, ResolveWorkspaceAccessResult } from "@paperclipai/shared";
 /**
  * JSON-RPC 2.0 message types and protocol helpers for the host ↔ worker IPC
  * channel.
@@ -1450,6 +1451,10 @@ export interface HostToWorkerMethods {
     params: ResolveRunContextRequest,
     result: ResolveRunContextResult,
   ];
+  resolveWorkspaceAccess: [
+    params: ResolveWorkspaceAccessRequest,
+    result: ResolveWorkspaceAccessResult
+  ];  
   resourceLifecycle: [params: ResourceLifecycleEvent, result: ResourceLifecycleResult];
   getData: [params: GetDataParams, result: unknown];
   /** @see PLUGIN_SPEC.md §13.9 */

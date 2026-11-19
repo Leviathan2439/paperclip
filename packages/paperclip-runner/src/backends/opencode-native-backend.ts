@@ -20,6 +20,10 @@ export function createOpenCodeNativeSessionBackend(
 
   return new HarnessDriverBackend(new OpenCodeServerDriver({
     ...options,
+    authorizedDirectories:
+      "authorizedDirectories" in input.workspace
+        ? input.workspace.authorizedDirectories
+        : undefined,
     systemInstructions: nativeSystemInstructions(input),
     runtimeContext: "runtimeContext" in input ? input.runtimeContext : null,
     model: input.provider.model,

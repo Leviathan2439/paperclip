@@ -1375,6 +1375,7 @@ export const PLUGIN_CAPABILITIES = [
   "agents.read",
   "agents.lifecycle.manage",
   "agents.context.provide",
+  "agents.workspace.access",
   "goals.read",
   "goals.create",
   "goals.update",

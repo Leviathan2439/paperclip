@@ -16227,7 +16227,15 @@ async function createRunnerdBackendWithinSessionClaim(
         gatewayPublicId: assignedGatewayPublicId!,
         bearerToken: assignedMcpToken,
         workMode: input.execution.task.workMode,
-        ...(input.execution.provider.kind === "opencode" ? { delivery: "on_demand" as const } : {}),
+        ...(input.execution.provider.kind === "opencode"
+          ? {
+              opencodePermissionMode: input.execution.provider.permissionMode,
+              authorizedDirectories:
+                "authorizedDirectories" in runnerExecution.workspace
+                  ? runnerExecution.workspace.authorizedDirectories ?? []
+                  : [],
+            }
+          : {}),
       }))
       : undefined),
     earlyPluginTaskOwner,
@@ -18248,6 +18256,10 @@ async function createRunnerdBackendWithinSessionClaim(
     ),
     codexTransportFactory: (recoveryContext) => {
       const bundle = createRunnerdCodexTransport({
+        authorizedDirectories:
+          "authorizedDirectories" in runnerExecution.workspace
+            ? runnerExecution.workspace.authorizedDirectories ?? []
+            : [],
         ...(input.recoveryPurpose === "stop_cleanup" ? { recoveryPurpose: "stop_cleanup" as const } : {}),
         measureOperation: process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim() ? measureRunnerOperation : undefined,
         recordTimingReceipt: process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim() ? recordRunnerTimingReceipt : undefined,

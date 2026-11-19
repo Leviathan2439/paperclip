@@ -43,6 +43,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@paperclipai/filesystem-sandbox": "workspace:^",
     "@paperclipai/shared": "workspace:*",
     "acpx": "0.22.0",
     "picocolors": "^1.1.1",

@@ -1594,6 +1594,10 @@ export interface CapabilityRunnerdCodexTransportOptions extends RunnerExecutionD
   /** Cacheless preparation requires an authenticated authorityRunId throughout this transport's lifetime. */
   recoveryLaunch?: { requirements: RunnerProviderLaunchRequirements };
   opencodePermissionMode?: NativeOpenCodePermissionMode;
+  authorizedDirectories?: Array<{
+    path: string;
+    access: "read" | "write";
+  }>;
   acpxAgent?: QualifiedAcpxAgent;
   /** Explicit evaluation-only candidate selection, never derived from persisted session input. */
   acpxCandidateProfile?: "pi" | "cursor" | "copilot" | "kimi";
@@ -3783,6 +3787,8 @@ function createCapabilityRunnerdProviderEnvironmentBase(input: {
         input.options.opencodeRuntimeDirectory ??
         resolve(input.options.stateDirectory ?? tmpdir(), "opencode"),
       ...commonIdentity,
+      PAPERCLIP_OPENCODE_AUTHORIZED_DIRECTORIES: JSON.stringify(
+        input.options.authorizedDirectories ?? []),
     };
   }
   if (input.provider === "acpx") {

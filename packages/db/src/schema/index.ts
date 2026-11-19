@@ -1,5 +1,6 @@
 export { chatSlackRegistrations } from "./chat_slack_registrations.js";
 export { companies } from "./companies.js";
+export { departments } from "./departments.js";
 export { companyLogos } from "./company_logos.js";
 export { companyTransferRuns } from "./company_transfer_runs.js";
 export { companyOnboardingSeeds } from "./company_onboarding_seeds.js";
@@ -285,3 +286,4 @@ export { issueThreadInteractionIdempotencyKeys } from "./issue_thread_interactio
 export { projectTaskExecutionPolicies, executionAdmissions, executionAdmissionProjectCharges } from "./execution_admissions.js";
 export { budgetEvaluationWork } from "./budget_evaluation_work.js";
 export { nativeProviderArtifacts, nativeProviderArtifactReferences } from "./native_provider_artifacts.js";
+export { departmentResponsibilities } from "./department_responsibilities.js";

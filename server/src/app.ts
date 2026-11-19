@@ -1,3 +1,4 @@
+import { departmentRoutes } from "./routes/departments.js";
 import type { IdleDeadlineOwners } from "./services/idle-deadline-types.js";
 import { startMcpClientMirrorSync } from "./services/public-mcp/client-mirror-sync.js";
 import { registerIdleMcpOwners } from "./services/public-mcp/idle-sleep-proof.js";
@@ -813,6 +814,7 @@ export async function createApp(
   api.use(agentProfileAvatarRoutes(db, opts.storageService));
   api.use(projectToolRoutes(db));
   api.use(taskWorkspaceRoutes(db));
+  api.use(departmentRoutes(db));
   api.use(projectRoutes(db));
   api.use(caseRoutes(db, opts.storageService));
   api.use(caseHandoffRoutes(db));
